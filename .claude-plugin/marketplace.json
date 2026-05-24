@@ -50,6 +50,15 @@
       "skills": [
         "./skills/claude-api"
       ]
+    },
+    {
+      "name": "health-tools",
+      "description": "Health symptom tracking tools including endometriosis endomap body scoring across pelvic pain, bleeding, bloating, fatigue, mental wellbeing and more",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/endomap-myers-briggs-scoring"
+      ]
     }
   ]
 }
