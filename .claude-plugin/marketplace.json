@@ -57,7 +57,7 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/endomap-myers-briggs-scoring"
+        "./skills/endomap-symptom-scoring"
       ]
     }
   ]
