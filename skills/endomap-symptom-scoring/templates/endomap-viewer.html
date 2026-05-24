@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Endomap — Endometriosis Symptom Score</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --anthropic-cream: #f5f4ef;
+    --anthropic-orange: #d4653a;
+    --anthropic-dark: #1a1915;
+    --anthropic-mid: #6b6860;
+    --anthropic-light: #c8c6bf;
+    --anthropic-white: #faf9f6;
+    --sidebar-w: 340px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--anthropic-cream);
+    color: var(--anthropic-dark);
+    min-height: 100vh;
+    display: flex;
+    font-size: 13px;
+  }
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--anthropic-white);
+    border-right: 1px solid var(--anthropic-light);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--anthropic-light);
+  }
+  .sidebar-header h1 {
+    font-family: 'Lora', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--anthropic-dark);
+    letter-spacing: -0.3px;
+  }
+  .sidebar-header p {
+    font-size: 11px;
+    color: var(--anthropic-mid);
+    margin-top: 3px;
+    font-weight: 300;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .overall-score {
+    padding: 14px 20px;
+    background: var(--anthropic-cream);
+    border-bottom: 1px solid var(--anthropic-light);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-number {
+    font-family: 'Lora', serif;
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--anthropic-orange);
+    line-height: 1;
+  }
+  .score-denom {
+    font-size: 13px;
+    color: var(--anthropic-mid);
+    font-weight: 300;
+    align-self: flex-end;
+    margin-bottom: 3px;
+  }
+  .score-meta { flex: 1; padding-left: 8px; }
+  .score-label {
+    font-size: 11px;
+    color: var(--anthropic-mid);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .dimensions { flex: 1; overflow-y: auto; padding-bottom: 8px; }
+  details.dim-section { border-bottom: 1px solid var(--anthropic-light); }
+  details.dim-section summary {
+    padding: 11px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  details.dim-section summary:hover { background: var(--anthropic-cream); }
+  details.dim-section[open] summary { background: var(--anthropic-cream); }
+  summary::-webkit-details-marker { display: none; }
+  .dim-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dim-name { flex: 1; font-weight: 500; font-size: 12px; color: var(--anthropic-dark); }
+  .dim-score-badge { font-size: 11px; color: var(--anthropic-mid); font-weight: 400; min-width: 28px; text-align: right; }
+  .dim-arrow { font-size: 10px; color: var(--anthropic-light); transition: transform 0.2s; }
+  details[open] .dim-arrow { transform: rotate(90deg); }
+  .dim-content { padding: 8px 20px 14px; }
+  .question-row { margin-bottom: 12px; }
+  .question-label { font-size: 11px; color: var(--anthropic-mid); margin-bottom: 5px; line-height: 1.4; font-weight: 400; }
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  input[type=range] { flex: 1; height: 3px; cursor: pointer; accent-color: var(--anthropic-orange); }
+  .slider-val { font-size: 12px; font-weight: 600; color: var(--anthropic-dark); min-width: 18px; text-align: right; }
+  .actions { padding: 14px 20px; border-top: 1px solid var(--anthropic-light); }
+  .btn {
+    width: 100%;
+    padding: 9px 16px;
+    border: 1px solid var(--anthropic-light);
+    background: var(--anthropic-white);
+    color: var(--anthropic-dark);
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn:hover { background: var(--anthropic-cream); border-color: var(--anthropic-mid); }
+  .disclaimer {
+    padding: 12px 20px;
+    font-size: 10px;
+    color: var(--anthropic-light);
+    line-height: 1.5;
+    border-top: 1px solid #e8e6df;
+  }
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 40px;
+    min-width: 0;
+  }
+  .main-title {
+    font-family: 'Lora', serif;
+    font-size: 14px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--anthropic-mid);
+    margin-bottom: 20px;
+    letter-spacing: 0.3px;
+    text-align: center;
+  }
+  .body-wrap { width: 100%; max-width: 280px; margin: 0 auto; }
+  .body-wrap svg { width: 100%; height: auto; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 28px;
+    width: 100%;
+    max-width: 560px;
+  }
+  .dim-card {
+    background: var(--anthropic-white);
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid var(--anthropic-light);
+  }
+  .dim-card-name {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--anthropic-mid);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dim-card-bar-wrap {
+    background: var(--anthropic-cream);
+    border-radius: 3px;
+    height: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+  .dim-card-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; width: 0%; }
+  .dim-card-footer { display: flex; justify-content: space-between; align-items: baseline; }
+  .dim-card-score { font-size: 15px; font-weight: 600; color: var(--anthropic-dark); font-family: 'Lora', serif; }
+  .dim-card-band { font-size: 10px; color: var(--anthropic-mid); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1>Endomap</h1>
+    <p>Endometriosis Symptom Score</p>
+  </div>
+
+  <div class="overall-score">
+    <div class="score-number" id="overall-num">0.0</div>
+    <div class="score-denom">&thinsp;/ 80</div>
+    <div class="score-meta">
+      <div class="score-label" id="overall-label">Rate each symptom area below</div>
+    </div>
+  </div>
+
+  <div class="dimensions">
+
+    <details class="dim-section" open>
+      <summary>
+        <span class="dim-dot" style="background:#c94a00"></span>
+        <span class="dim-name">Pelvic Pain</span>
+        <span class="dim-score-badge" id="badge-pelvic">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Average pelvic or lower abdominal pain in the past 30 days</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="pelvic" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Pain during or after sex (dyspareunia)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="pelvic" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">How often does pelvic pain interfere with daily activities</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="pelvic" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Ovulation pain (mid-cycle cramping or pain)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="pelvic" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+    <details class="dim-section">
+      <summary>
+        <span class="dim-dot" style="background:#b35a00"></span>
+        <span class="dim-name">Bowel &amp; Bladder</span>
+        <span class="dim-score-badge" id="badge-bowel">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Pain or cramping during bowel movements (dyschezia)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bowel" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Urgency, frequency, or pain when urinating (dysuria)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bowel" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Diarrhea or constipation episodes — especially around your period</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bowel" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">How much do bowel or bladder symptoms disrupt your daily life</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bowel" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+    <details class="dim-section">
+      <summary>
+        <span class="dim-dot" style="background:#a81030"></span>
+        <span class="dim-name">Bleeding</span>
+        <span class="dim-score-badge" id="badge-bleeding">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Menstrual flow intensity (0 = very light, 10 = flooding / extremely heavy)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bleeding" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Duration of heavy bleeding days (0 = 1 day or less, 10 = 7+ days)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bleeding" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Spotting or bleeding between periods</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bleeding" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Passage of large blood clots</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="bleeding" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+    <details class="dim-section">
+      <summary>
+        <span class="dim-dot" style="background:#2d7a2d"></span>
+        <span class="dim-name">Bloating &amp; Nausea</span>
+        <span class="dim-score-badge" id="badge-gi">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Severity of abdominal bloating ("endo belly")</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="gi" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Nausea during or around your period</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="gi" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Stomach cramping unrelated to menstrual periods</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="gi" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">How much does bloating or nausea affect eating or daily comfort</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="gi" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+    <details class="dim-section">
+      <summary>
+        <span class="dim-dot" style="background:#1a5fa8"></span>
+        <span class="dim-name">Back &amp; Leg Pain</span>
+        <span class="dim-score-badge" id="badge-legs">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Lower back pain or sacral / hip pain</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="legs" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Radiating leg pain, numbness, or tingling (sciatic-type)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="legs" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Hip stiffness or pain with movement</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="legs" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">How much does back or leg pain limit your mobility</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="legs" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+    <details class="dim-section">
+      <summary>
+        <span class="dim-dot" style="background:#6a1fa8"></span>
+        <span class="dim-name">Shoulder &amp; Chest Pain</span>
+        <span class="dim-score-badge" id="badge-shoulder">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Right shoulder tip pain — especially around your period</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="shoulder" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Chest pain or tightness during menstruation</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="shoulder" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Pain that worsens with deep breathing during your cycle</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="shoulder" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">How much does shoulder or chest pain worry or affect you</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="shoulder" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+    <details class="dim-section">
+      <summary>
+        <span class="dim-dot" style="background:#8a7a00"></span>
+        <span class="dim-name">Fatigue &amp; Sleep</span>
+        <span class="dim-score-badge" id="badge-fatigue">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Overall fatigue level that isn't relieved by rest</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="fatigue" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Difficulty falling or staying asleep (insomnia)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="fatigue" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">How often does fatigue stop you from doing things you want to do</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="fatigue" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Energy compared to what feels normal for you (0 = full energy, 10 = no energy at all)</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="fatigue" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+    <details class="dim-section">
+      <summary>
+        <span class="dim-dot" style="background:#1a6a8a"></span>
+        <span class="dim-name">Mental &amp; Emotional</span>
+        <span class="dim-score-badge" id="badge-mental">0.0</span>
+        <span class="dim-arrow">&rsaquo;</span>
+      </summary>
+      <div class="dim-content">
+        <div class="question-row"><div class="question-label">Anxiety related to your condition</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="mental" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Low mood or feelings of depression</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="mental" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Brain fog or difficulty concentrating</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="mental" oninput="update(this)"><span class="slider-val">0</span></div></div>
+        <div class="question-row"><div class="question-label">Overall emotional impact of your condition on your quality of life</div><div class="slider-row"><input type="range" min="0" max="10" value="0" data-dim="mental" oninput="update(this)"><span class="slider-val">0</span></div></div>
+      </div>
+    </details>
+
+  </div>
+
+  <div class="actions">
+    <button class="btn" onclick="resetAll()">Reset All Sliders</button>
+  </div>
+
+  <div class="disclaimer">
+    This tool is for self-tracking and symptom awareness only. It does not constitute medical advice, diagnosis, or treatment. Please consult a qualified healthcare provider for evaluation and care.
+  </div>
+</aside>
+
+<main class="main">
+  <div class="main-title">Your symptom map updates as you score each area</div>
+
+  <div class="body-wrap">
+    <svg viewBox="0 0 220 520" xmlns="http://www.w3.org/2000/svg">
+      <rect width="220" height="520" fill="#faf9f6" rx="16"/>
+      <rect id="region-fatigue" x="62" y="108" width="96" height="220" rx="8" fill="rgba(138,122,0,0)" style="transition:fill 0.5s ease; pointer-events:none;"/>
+      <ellipse id="region-mental" cx="110" cy="48" rx="34" ry="39" fill="rgba(26,106,138,0.06)" style="transition:fill 0.5s ease"/>
+      <rect id="region-mental-neck" x="97" y="81" width="26" height="22" rx="5" fill="rgba(26,106,138,0.06)" style="transition:fill 0.5s ease"/>
+      <path id="region-shoulder-l" d="M 62 108 Q 46 110 38 120 Q 30 130 32 145 Q 34 155 42 155 Q 50 155 54 145 Q 58 130 64 118 Z" fill="rgba(106,31,168,0.06)" style="transition:fill 0.5s ease"/>
+      <path id="region-shoulder-r" d="M 158 108 Q 174 110 182 120 Q 190 130 188 145 Q 186 155 178 155 Q 170 155 166 145 Q 162 130 156 118 Z" fill="rgba(106,31,168,0.06)" style="transition:fill 0.5s ease"/>
+      <rect id="region-chest" x="64" y="103" width="92" height="52" rx="6" fill="rgba(106,31,168,0.06)" style="transition:fill 0.5s ease"/>
+      <rect id="region-gi" x="66" y="152" width="88" height="58" rx="6" fill="rgba(45,122,45,0.06)" style="transition:fill 0.5s ease"/>
+      <path id="region-pelvic" d="M 64 207 L 156 207 L 158 255 Q 160 285 155 295 L 145 300 L 75 300 L 65 295 Q 60 285 62 255 Z" fill="rgba(201,74,0,0.06)" style="transition:fill 0.5s ease"/>
+      <ellipse id="region-bleeding" cx="110" cy="252" rx="30" ry="24" fill="rgba(168,16,48,0.06)" style="transition:fill 0.5s ease"/>
+      <path id="region-bowel-l" d="M 64 212 Q 50 222 48 248 Q 46 268 52 278 Q 58 286 64 282 Z" fill="rgba(179,90,0,0.06)" style="transition:fill 0.5s ease"/>
+      <path id="region-bowel-r" d="M 156 212 Q 170 222 172 248 Q 174 268 168 278 Q 162 286 156 282 Z" fill="rgba(179,90,0,0.06)" style="transition:fill 0.5s ease"/>
+      <rect id="region-leg-l" x="66" y="298" width="38" height="148" rx="12" fill="rgba(26,95,168,0.06)" style="transition:fill 0.5s ease"/>
+      <rect id="region-leg-r" x="116" y="298" width="38" height="148" rx="12" fill="rgba(26,95,168,0.06)" style="transition:fill 0.5s ease"/>
+      <rect x="62" y="442" width="44" height="16" rx="6" fill="#d8d6ce"/>
+      <rect x="114" y="442" width="44" height="16" rx="6" fill="#d8d6ce"/>
+      <path d="M 64 112 Q 52 130 42 162 Q 34 185 36 200 Q 38 210 44 208 Q 50 206 52 196 Q 58 174 66 152 Q 70 136 70 118 Z" fill="#e2dfd8"/>
+      <path d="M 156 112 Q 168 130 178 162 Q 186 185 184 200 Q 182 210 176 208 Q 170 206 168 196 Q 162 174 154 152 Q 150 136 150 118 Z" fill="#e2dfd8"/>
+      <text x="110" y="13" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7.5" fill="#c0bdb5" letter-spacing="1.2">MENTAL HEALTH</text>
+      <text x="15" y="132" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" fill="#c0bdb5" transform="rotate(-90,15,132)">SHOULDER</text>
+      <text x="205" y="132" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" fill="#c0bdb5" transform="rotate(90,205,132)">SHOULDER</text>
+      <text x="110" y="185" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" fill="#c0bdb599" letter-spacing="0.6">BLOATING &amp; NAUSEA</text>
+      <text x="110" y="232" text-anchor="middle" font-family="Poppins,sans-serif" font-size="7" fill="#c0bdb599" letter-spacing="0.6">PELVIC PAIN</text>
+      <text x="110" y="255" text-anchor="middle" font-family="Poppins,sans-serif" font-size="6.5" fill="#c0bdb599" letter-spacing="0.4">BLEEDING</text>
+      <text x="36" y="252" text-anchor="middle" font-family="Poppins,sans-serif" font-size="6" fill="#c0bdb599" transform="rotate(-90,36,252)">BOWEL</text>
+      <text x="184" y="252" text-anchor="middle" font-family="Poppins,sans-serif" font-size="6" fill="#c0bdb599" transform="rotate(90,184,252)">BLADDER</text>
+      <text x="85" y="378" text-anchor="middle" font-family="Poppins,sans-serif" font-size="6.5" fill="#c0bdb599" transform="rotate(-90,85,378)">LEGS</text>
+      <text x="135" y="378" text-anchor="middle" font-family="Poppins,sans-serif" font-size="6.5" fill="#c0bdb599" transform="rotate(90,135,378)">BACK</text>
+    </svg>
+  </div>
+
+  <div class="summary-grid">
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#c94a00"></span>Pelvic Pain</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-pelvic" style="background:#c94a00"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-pelvic">0.0</span><span class="dim-card-band" id="band-pelvic">Minimal</span></div></div>
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#b35a00"></span>Bowel &amp; Bladder</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-bowel" style="background:#b35a00"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-bowel">0.0</span><span class="dim-card-band" id="band-bowel">Minimal</span></div></div>
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#a81030"></span>Bleeding</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-bleeding" style="background:#a81030"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-bleeding">0.0</span><span class="dim-card-band" id="band-bleeding">Minimal</span></div></div>
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#2d7a2d"></span>Bloating &amp; Nausea</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-gi" style="background:#2d7a2d"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-gi">0.0</span><span class="dim-card-band" id="band-gi">Minimal</span></div></div>
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#1a5fa8"></span>Back &amp; Leg Pain</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-legs" style="background:#1a5fa8"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-legs">0.0</span><span class="dim-card-band" id="band-legs">Minimal</span></div></div>
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#6a1fa8"></span>Shoulder &amp; Chest</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-shoulder" style="background:#6a1fa8"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-shoulder">0.0</span><span class="dim-card-band" id="band-shoulder">Minimal</span></div></div>
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#8a7a00"></span>Fatigue &amp; Sleep</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-fatigue" style="background:#8a7a00"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-fatigue">0.0</span><span class="dim-card-band" id="band-fatigue">Minimal</span></div></div>
+    <div class="dim-card"><div class="dim-card-name"><span class="card-dot" style="background:#1a6a8a"></span>Mental &amp; Emotional</div><div class="dim-card-bar-wrap"><div class="dim-card-bar" id="bar-mental" style="background:#1a6a8a"></div></div><div class="dim-card-footer"><span class="dim-card-score" id="score-mental">0.0</span><span class="dim-card-band" id="band-mental">Minimal</span></div></div>
+  </div>
+</main>
+
+<script>
+const DIMS = {
+  pelvic:   { regions: ['region-pelvic'],                                            rgb: [201,74,0],   overlay: false },
+  bowel:    { regions: ['region-bowel-l','region-bowel-r'],                          rgb: [179,90,0],   overlay: false },
+  bleeding: { regions: ['region-bleeding'],                                           rgb: [168,16,48],  overlay: false },
+  gi:       { regions: ['region-gi'],                                                rgb: [45,122,45],  overlay: false },
+  legs:     { regions: ['region-leg-l','region-leg-r'],                              rgb: [26,95,168],  overlay: false },
+  shoulder: { regions: ['region-shoulder-l','region-shoulder-r','region-chest'],     rgb: [106,31,168], overlay: false },
+  fatigue:  { regions: ['region-fatigue'],                                           rgb: [138,122,0],  overlay: true  },
+  mental:   { regions: ['region-mental','region-mental-neck'],                       rgb: [26,106,138], overlay: false },
+};
+const BANDS = [[0,1.99,'Minimal'],[2,3.99,'Mild'],[4,5.99,'Moderate'],[6,7.99,'Significant'],[8,10,'Severe']];
+const OVERALL = [[0,15,'Low overall burden'],[15,30,'Mild–moderate burden'],[30,50,'Moderate–significant burden'],[50,65,'High burden'],[65,80,'Very high burden']];
+function getBand(s) { for (const [lo,hi,l] of BANDS) if (s>=lo&&s<=hi) return l; return 'Minimal'; }
+function scoreColor(rgb, score, overlay) {
+  const a = overlay ? (score/10)*0.32 : 0.06+(score/10)*0.84;
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(3)})`;
+}
+function update(slider) {
+  slider.parentElement.querySelector('.slider-val').textContent = slider.value;
+  recalc();
+}
+function recalc() {
+  let total = 0;
+  for (const [dim, cfg] of Object.entries(DIMS)) {
+    const sliders = document.querySelectorAll(`input[data-dim="${dim}"]`);
+    let sum = 0; sliders.forEach(s => sum += +s.value);
+    const avg = sliders.length ? sum / sliders.length : 0;
+    total += avg;
+    const color = scoreColor(cfg.rgb, avg, cfg.overlay);
+    cfg.regions.forEach(id => { const el = document.getElementById(id); if (el) el.style.fill = color; });
+    const se = document.getElementById(`score-${dim}`);
+    const be = document.getElementById(`band-${dim}`);
+    const br = document.getElementById(`bar-${dim}`);
+    const bg = document.getElementById(`badge-${dim}`);
+    if (se) se.textContent = avg.toFixed(1);
+    if (be) be.textContent = getBand(avg);
+    if (br) br.style.width = `${avg*10}%`;
+    if (bg) bg.textContent = avg.toFixed(1);
+  }
+  const on = document.getElementById('overall-num');
+  const ol = document.getElementById('overall-label');
+  if (on) on.textContent = total.toFixed(1);
+  if (ol) { for (const [lo,hi,l] of OVERALL) if (total>=lo&&total<=hi+0.01) { ol.textContent=l; break; } }
+}
+function resetAll() {
+  document.querySelectorAll('input[type=range]').forEach(s => {
+    s.value = 0;
+    const v = s.parentElement.querySelector('.slider-val');
+    if (v) v.textContent = '0';
+  });
+  recalc();
+}
+recalc();
+</script>
+</body>
+</html>
